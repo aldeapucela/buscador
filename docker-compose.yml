@@ -1,0 +1,21 @@
+services:
+  buscador:
+    build: .
+    container_name: buscador
+    restart: unless-stopped
+    env_file: .env
+    # Solo loopback: al público se llega por el nginx del host, nunca por el puerto directo.
+    ports: ["127.0.0.1:8100:8100"]
+    volumes:
+      - buscador-data:/data
+    networks: [default, n8n]
+
+volumes:
+  buscador-data:
+
+networks:
+  # n8n vive en su propia red: así el bot puede llamar a http://buscador:8100 por nombre,
+  # sin salir a internet ni depender de la IP del bridge.
+  n8n:
+    name: n8n-docker_default
+    external: true
