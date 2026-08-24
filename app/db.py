@@ -139,8 +139,9 @@ def guardar_documento(db, doc, chunks, vectores):
            VALUES (:source_type, :source_id, :url, :title, :author_hash, :created_at,
                    :updated_at, :expires_at, :visibility, :signature, 0)
            ON CONFLICT(source_type, source_id) DO UPDATE SET
-             url=excluded.url, title=excluded.title, updated_at=excluded.updated_at,
-             expires_at=excluded.expires_at, signature=excluded.signature, deleted=0
+             url=excluded.url, title=excluded.title, created_at=excluded.created_at,
+             updated_at=excluded.updated_at, expires_at=excluded.expires_at,
+             signature=excluded.signature, deleted=0
            RETURNING id""",
         doc,
     )

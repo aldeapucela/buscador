@@ -23,7 +23,12 @@ API_KEY = os.environ.get("API_KEY")
 app = FastAPI(title="Buscador Aldea Pucela")
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://([a-z0-9-]+\.)?(aldeapucela\.org|otrapucela\.org)",
+    # Las webs del ecosistema, y localhost para poder probar el widget en local. /search es
+    # público y de solo lectura; lo que enseña el chat es scope=group, que exige clave aparte.
+    allow_origin_regex=(
+        r"https://([a-z0-9-]+\.)?(aldeapucela\.org|otrapucela\.org)"
+        r"|http://(localhost|127\.0\.0\.1)(:\d+)?"
+    ),
     allow_methods=["GET"],
     allow_headers=["*"],
 )

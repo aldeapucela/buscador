@@ -7,6 +7,7 @@ scrapearla. Los que no están en ningún feed (los más antiguos) se leen del HT
 import hashlib
 import re
 import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
 
 from app.db import firma_actual
 from ingest.common import descargar, html_a_texto, indexar
@@ -14,6 +15,18 @@ from ingest.common import descargar, html_a_texto, indexar
 SITIO = "https://otrapucela.org"
 FEEDS = ["/feed.xml", "/vineta/feed.xml", "/podcast.xml"]
 NS = {"content": "http://purl.org/rss/1.0/modules/content/"}
+
+
+def fecha_iso(valor):
+    """Los feeds dan la fecha en RFC 822 ('Tue, 07 Apr 2026 07:05:59 GMT'). Se guarda en ISO
+    porque el resto del sistema compara y recorta fechas por los 10 primeros caracteres."""
+    valor = (valor or "").strip()
+    if not valor:
+        return ""
+    try:
+        return parsedate_to_datetime(valor).isoformat()
+    except (TypeError, ValueError):
+        return valor  # las páginas HTML ya traen <time datetime> en ISO
 
 
 def _texto(nodo, etiqueta, ns=None):
@@ -36,7 +49,7 @@ def articulos_del_feed():
             if url:
                 encontrados[url] = {
                     "title": _texto(item, "title").strip(),
-                    "fecha": _texto(item, "pubDate").strip(),
+                    "fecha": fecha_iso(_texto(item, "pubDate")),
                     "texto": html_a_texto(cuerpo),
                 }
     return encontrados
@@ -57,7 +70,7 @@ def articulo_del_html(url):
     fecha = re.search(r'<time[^>]*datetime="([^"]+)"', pagina)
     return {
         "title": html_a_texto(titulo.group(1)) if titulo else url,
-        "fecha": fecha.group(1) if fecha else "",
+        "fecha": fecha_iso(fecha.group(1)) if fecha else "",
         "texto": html_a_texto(cuerpo),
     }
 
@@ -81,7 +94,11 @@ def ingestar(db, limite=None):
         if not art["texto"]:
             print(f"  (sin texto: {url})")
             continue
-        firma = hashlib.sha256(art["texto"].encode()).hexdigest()[:16]
+        # La firma cubre también título y fecha: si se arregla cómo se extrae un metadato,
+        # el reindexado lo propaga solo en vez de saltarse el documento por "no ha cambiado".
+        firma = hashlib.sha256(
+            f"{art['title']}|{art['fecha']}|{art['texto']}".encode()
+        ).hexdigest()[:16]
         doc = {
             "source_type": "otrapucela",
             "source_id": url,

@@ -76,7 +76,11 @@ def detectar(texto):
     for patron in CONTRATOS:
         m = re.search(patron, limpio)
         if m:
-            arg = (m.group("arg") or "").strip(" ?¿.,")
+            # El nombre de la empresa se saca del texto ORIGINAL, no del normalizado, para
+            # que se vea "TELECYL" y no "telecyl". Los índices coinciden porque quitar tildes
+            # y bajar a minúsculas conserva la longitud carácter a carácter.
+            ini, fin = m.span("arg")
+            arg = (texto or "").strip()[ini:fin].strip(" ?¿.,")
             # "/contratos" a secas no identifica ninguna empresa: que lo diga el usuario.
             return "contratos", arg
     return "busqueda", texto
@@ -213,9 +217,11 @@ def _autocomprobacion():
     assert detectar("planes para hoy") == ("eventos", "hoy")
     assert detectar("/hoy") == ("eventos", "hoy")
     assert detectar("qué hay esta semana") == ("eventos", "semana")
-    assert detectar("/contratos TELECYL") == ("contratos", "telecyl")
-    assert detectar("contratos de Telecyl") == ("contratos", "telecyl")
-    assert detectar("cuánto se le ha adjudicado a Gotion") == ("contratos", "gotion")
+    # El nombre de la empresa conserva mayúsculas y tildes del mensaje original
+    assert detectar("/contratos TELECYL") == ("contratos", "TELECYL")
+    assert detectar("contratos de Telecyl") == ("contratos", "Telecyl")
+    assert detectar("cuánto se le ha adjudicado a Gotion") == ("contratos", "Gotion")
+    assert detectar("/contratos Construcciones Pérez") == ("contratos", "Construcciones Pérez")
     assert detectar("/contratos")[0] == "contratos" and detectar("/contratos")[1] == ""
 
     # Lo ambiguo se va al buscador, que es el comportamiento seguro

@@ -4,8 +4,12 @@ Buscador híbrido (vectorial + léxico + reranker, todo local en CPU) sobre el c
 ecosistema Aldea Pucela: foro Discourse, La Otra Pucela, eventos y chat de Telegram.
 Se expone en el bot de Telegram y en las webs. Coste por búsqueda: 0 €.
 
-Estado: **Fase 3 completada** (piloto + chat + enrutador de intención).
-Siguiente: Fase 4, exponerlo en el bot de Telegram y en las webs, y desplegarlo.
+Estado: **Fase 4 completada.** Desplegado en oracle-server (contenedor `buscador`), con el
+subflujo del bot en n8n y el widget para las webs. Falta el DNS de
+`buscador.aldeapucela.org` para exponerlo en HTTPS; ver [deploy/](deploy/).
+
+- Despliegue y reindexado nocturno: [deploy/README.md](deploy/README.md)
+- Widget para las webs: [web/buscador.js](web/buscador.js) (`web/demo.html` para probarlo)
 
 ## Cómo se usa
 
@@ -248,3 +252,17 @@ por la tarde, falsos positivos), y aquí se puede probar en un segundo con
   reconstruyendo el enlace, pero conviene arreglarlo en origen.
 - Conectar el flujo de moderación de n8n a `POST /forget` (Fase 2) para que un borrado por
   spam también salga del índice.
+
+## El bot de Telegram
+
+El comando vive en el subflujo de n8n **[Aldea Pucela] Buscador del grupo**, que recibe
+`comando`, `consulta`, `chat_id`, `thread_id` y `mensaje_a_olvidar`, llama a `/ask` (o a
+`/forget`) y responde en el grupo con enlaces, fecha y fuente.
+
+Va en un workflow aparte, no dentro del de comandos, por una razón concreta: **Telegram
+admite un solo webhook por bot**, así que un segundo Telegram Trigger sobre el mismo bot se
+pelearía con el que ya existe. El workflow de comandos solo necesita una rama nueva que llame
+a este subflujo con "Execute Sub-workflow".
+
+n8n habla con el buscador por la red interna de Docker (`http://buscador:8100`), sin salir a
+internet ni pasar por nginx.
