@@ -58,12 +58,16 @@ chat (de 79.907 mensajes con texto aprovechable, el 83 % de los 95.712 del log).
 
 Contra las 65 consultas de `eval/golden.jsonl` (50 de web + 15 de chat):
 
-| | recall@8 | MRR | p95 |
+| 65 consultas | recall@8 | MRR | p95 (portátil) |
 |---|---|---|---|
-| **todo, 65 consultas** | **0,94** | 0,859 | **594 ms** |
-| · 50 consultas web (foro + otrapucela) | 1,00 | | |
-| · 15 consultas de chat | 0,73 | | |
-| sin reranker (referencia, Fase 1) | 1,00 | 0,921 | 12 ms |
+| con reranker | 0,94 | 0,859 | 587 ms |
+| **sin reranker** (lo que corre en producción) | **0,95** | 0,833 | **45 ms** |
+
+**El reranker se quedó fuera, y no solo por velocidad.** Con el corpus completo mejora el
+orden muy poco (+0,026 de MRR) y *empeora* el recall (0,94 frente a 0,95; en las consultas de
+chat, 0,73 frente a 0,80). En la Fase 1, con solo el piloto indexado, parecía que aportaba
+más. Además el servidor tiene **un solo núcleo**, donde cuesta ~400 ms por candidato: 12 s por
+consulta. Se enciende con `RERANKER=1` si algún día la máquina da para ello.
 
 Que las 50 consultas web sigan en 1,00 con el chat dentro del índice es la señal importante:
 añadir 29.796 ventanas no ha degradado nada lo anterior.
@@ -74,10 +78,7 @@ veces), así que etiquetar una sola ventana como "la correcta" subestima la cali
 cifra de 0,73 es un suelo, no un techo. Se deja así a propósito: ampliar las etiquetas con lo
 que ya devuelve el sistema sería ajustar el examen al alumno.
 
-El reranker cuesta ~500 ms y aporta +0,06 de MRR: si en el servidor arm64 la latencia se
-fuera de madre, apagarlo es una salida digna (`usar_reranker=False`) antes que tocar nada más.
-
-Dos ajustes salieron de medir, y los dos mejoran calidad **y** velocidad a la vez, porque el
+Dos ajustes del reranker salieron de medir en la Fase 1 (siguen valiendo si se enciende), y los dos mejoran calidad **y** velocidad a la vez, porque el
 reranker se despista con pasajes largos y con la cola de candidatos:
 
 - 30 candidatos a rerankear en vez de 50: MRR 0,963 → 0,980 y 2,4x más rápido.

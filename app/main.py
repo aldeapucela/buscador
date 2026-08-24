@@ -16,7 +16,7 @@ from app.db import (
 )
 from app.pii import hash_autor
 from app.router import responder
-from app.search import buscar
+from app.search import RERANKER_POR_DEFECTO, buscar
 
 API_KEY = os.environ.get("API_KEY")
 
@@ -60,7 +60,7 @@ def healthz():
     fila = db().execute(
         "SELECT (SELECT count(*) FROM documents WHERE deleted=0), (SELECT count(*) FROM chunks)"
     ).fetchone()
-    return {"ok": True, "documentos": fila[0], "chunks": fila[1]}
+    return {"ok": True, "documentos": fila[0], "chunks": fila[1], "reranker": RERANKER_POR_DEFECTO}
 
 
 @app.get("/search")

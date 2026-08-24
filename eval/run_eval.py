@@ -25,7 +25,9 @@ def acierta(resultado_url, esperadas):
 
 
 def main(argv):
-    usar_reranker = "--sin-reranker" not in argv
+    # None = lo que diga la variable RERANKER del entorno (así el eval mide lo mismo
+    # que servirá el servidor). --sin-reranker lo fuerza a apagado.
+    usar_reranker = False if "--sin-reranker" in argv else None
     limite = 8
     for a in argv:
         if a.startswith("--limite="):
@@ -72,7 +74,9 @@ def main(argv):
     print(f"recall@{limite}:    {aciertos / n:.2f}  ({aciertos}/{n})")
     print(f"MRR:         {sum(rr) / n:.3f}")
     print(f"latencia:    mediana {tiempos[n // 2]:.0f} ms | p95 {p95:.0f} ms | max {tiempos[-1]:.0f} ms")
-    print(f"reranker:    {'sí' if usar_reranker else 'no'}")
+    from app.search import RERANKER_POR_DEFECTO
+    activo = RERANKER_POR_DEFECTO if usar_reranker is None else usar_reranker
+    print(f"reranker:    {'sí' if activo else 'no'}")
     if fallos:
         print(f"\nfallos ({len(fallos)}):")
         for q, top in fallos:

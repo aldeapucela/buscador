@@ -1,12 +1,18 @@
 """Búsqueda híbrida: vectorial + léxica (FTS5), fusión RRF, reranker local y ponderaciones."""
 
 import math
+import os
 import re
 import time
 
 import sqlite_vec
 
 from app import models
+
+# El reranker mejora el orden (+0,06 de MRR) pero cuesta ~400 ms por candidato en un núcleo.
+# En oracle-server, que tiene UNO, son 12 s por consulta: allí va apagado con RERANKER=0.
+# Apagarlo no cambia el recall@8 (1,00 en el set dorado), solo el orden dentro del top 8.
+RERANKER_POR_DEFECTO = os.environ.get("RERANKER", "1") != "0"
 
 # 30 candidatos en vez de 50: medido en la Fase 1, es 2,4x más rápido y el MRR sube
 # (0,963 → 0,980), porque RRF ya deja arriba lo bueno y la cola solo añade ruido.
@@ -84,8 +90,10 @@ def _sigmoide(x):
     return 1 / (1 + math.exp(-x))
 
 
-def buscar(db, consulta, scope="public", sources=None, limite=8, usar_reranker=True):
+def buscar(db, consulta, scope="public", sources=None, limite=8, usar_reranker=None):
     t0 = time.time()
+    if usar_reranker is None:
+        usar_reranker = RERANKER_POR_DEFECTO
     consulta = (consulta or "").strip()
     if not consulta:
         return {"query": consulta, "took_ms": 0, "results": []}
