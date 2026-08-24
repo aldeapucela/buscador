@@ -254,6 +254,23 @@ por la tarde, falsos positivos), y aquí se puede probar en un segundo con
 - Conectar el flujo de moderación de n8n a `POST /forget` (Fase 2) para que un borrado por
   spam también salga del índice.
 
+## Rendimiento real en producción
+
+Medido en oracle-server (**un solo núcleo** arm64) con el índice completo y la máquina en
+reposo:
+
+| | tiempo |
+|---|---|
+| `/search` (10 consultas distintas) | 77-320 ms, mediana ~130 ms |
+| `/ask` con `/finde` (agenda ya cacheada) | ~5 ms |
+| `/ask` con `/finde` (primera vez, baja los 2,9 MB de la agenda) | ~450 ms |
+| `/ask` con `/contratos EMPRESA`, empresa nueva | ~3,5 s |
+| `/ask` con `/contratos EMPRESA`, empresa ya consultada | ~40 ms |
+
+Los 3,5 s de `/contratos` **no son nuestros**: la API de contratos.aldeapucela.org tarda eso
+en resolver una consulta nueva y luego la cachea ella (comprobado llamándola directamente,
+sin pasar por el buscador). A partir de la segunda vez va a 50 ms.
+
 ## El bot de Telegram
 
 El comando vive en el subflujo de n8n **[Aldea Pucela] Buscador del grupo**, que recibe
