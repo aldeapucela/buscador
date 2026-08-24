@@ -67,32 +67,37 @@ Si algún día se quiere el buscador en las webs, está todo preparado en
 `nginx-buscador.conf`: haría falta un registro A de `buscador.aldeapucela.org` a la IP del
 servidor y luego certbot.
 
-## Enchufar el bot (paso pendiente, en producción)
+## El bot en n8n
 
-El subflujo **[Aldea Pucela] Buscador del grupo** ya está creado en n8n, **sin publicar**.
-Faltan tres cosas, todas en la interfaz de n8n:
+Dos workflows:
 
-1. **Crear la credencial `Buscador API Key`** (tipo *Header Auth*): nombre `X-API-Key`, valor
-   el `API_KEY` de `~/apps/buscador/.env` del servidor. La usan los dos nodos HTTP. Es la
-   única que falta: la de Telegram ya está puesta (*Telegram account 2*, AldeaPucela_bot).
-2. **Añadir la rama en el workflow de comandos** (`JMdOQ9eBLbRfD1Xn`), junto a las de
-   `/permitirfotos` y `/publicar`: un nodo *If* que compruebe que el texto empieza por
-   `/buscar` (o `/olvidar`), seguido de un nodo *Execute Sub-workflow* apuntando a este
-   subflujo, con estas entradas:
+- **[Aldea Pucela] Buscador del grupo** (`vNnEVp5BiR7LyasK`) — hace todo el trabajo. Recibe el
+  mensaje de Telegram tal cual, detecta el comando, llama a `/ask` o a `/forget` y responde en
+  el mismo topic.
+- **[Aldea Pucela] Comandos AldeaPucela_bot** (`JMdOQ9eBLbRfD1Xn`) — el de siempre. Se le
+  añadieron dos nodos colgando del Telegram Trigger, en paralelo a `/permitirfotos`,
+  `/publicar` y `/webpeluditos`: un *If* (`Es del buscador?`) y un *Execute Sub-workflow*
+  (`Llamar al buscador`). Ninguna rama existente se tocó.
 
-   | Entrada | Valor |
-   |---|---|
-   | `comando` | `buscar` o `olvidar` |
-   | `consulta` | el texto del mensaje sin el comando |
-   | `chat_id` | `{{ $json.message.chat.id }}` |
-   | `thread_id` | `{{ $json.message.message_thread_id }}` |
-   | `mensaje_a_olvidar` | `{{ $json.message.reply_to_message.message_id }}` (solo para `/olvidar`) |
+El buscador no tiene su propio Telegram Trigger **a propósito**: Telegram admite un solo
+webhook por bot, así que un segundo trigger sobre AldeaPucela_bot dejaría sordo al bot de
+moderación.
 
-Se hace así, y no con un segundo Telegram Trigger, porque **Telegram solo admite un webhook
-por bot**: dos triggers sobre el mismo bot se pisan el uno al otro.
+Comandos: `/buscar algo`, `/finde`, `/hoy`, `/manana`, `/semana`, `/contratos EMPRESA` y
+`/olvidar` (respondiendo a un mensaje propio). Funcionan también con `@AldeaPucela_bot`
+pegado al comando, que es como los manda Telegram en los grupos.
 
-Para `/olvidar` conviene además que el bot compruebe que quien lo pide es el autor del mensaje
-respondido (o un admin); si no, cualquiera podría borrar mensajes ajenos del índice.
+`/olvidar` solo lo acepta **el autor del mensaje respondido**: se comprueba comparando
+`message.from.id` con `reply_to_message.from.id`. Los admins, de momento, no tienen atajo.
+
+### Lo único que falta
+
+**Crear la credencial `Buscador API Key`** (tipo *Header Auth*): nombre `X-API-Key`, valor el
+`API_KEY` de `~/apps/buscador/.env` del servidor. La usan los dos nodos HTTP del subflujo.
+Hasta que exista, los comandos del buscador no responden (fallan dentro de n8n, sin publicar
+nada en el grupo); el resto del bot sigue funcionando igual.
+
+La credencial de Telegram ya está puesta: *Telegram account 2* (AldeaPucela_bot).
 
 ## Poner el buscador en las webs
 
