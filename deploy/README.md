@@ -37,8 +37,11 @@ ssh oracle-server 'cd ~/apps/buscador && git pull && docker compose up -d --buil
 `crontab -e` en el servidor:
 
 ```
-15 4 * * * cd ~/apps/buscador && docker compose exec -T buscador python -m ingest >> ~/apps/buscador/ingest.log 2>&1
+15 4 * * * cd ~/apps/buscador && /usr/bin/flock -n /tmp/buscador-ingest.lock /usr/bin/docker compose exec -T buscador python -m ingest >> ~/apps/buscador/ingest.log 2>&1
 ```
+
+El `flock` evita que dos reindexados se solapen: SQLite no lleva bien dos escritores y una
+ingesta larga que se cruzara con la de la noche siguiente daría errores de bloqueo.
 
 La ingesta es incremental: en una noche normal solo toca lo que ha cambiado (las fuentes web
 en segundos, y el chat según los mensajes nuevos).
