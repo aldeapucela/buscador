@@ -56,12 +56,16 @@ en segundos, y el chat según los mensajes nuevos).
 - El índice vive en el volumen `buscador-data`, así que sobrevive a los rebuilds. Para
   empezar de cero: `docker compose down && docker volume rm buscador_buscador-data`.
 
-## Exponerlo en HTTPS
+## Exponerlo en HTTPS (aparcado)
 
-Ver `nginx-buscador.conf`. **Hace falta primero un registro A** para
-`buscador.aldeapucela.org` apuntando a la IP del servidor: sin DNS, certbot no puede emitir el
-certificado. Mientras no exista, el bot funciona igual (habla con el contenedor por la red de
-docker); lo que espera es el buscador de las webs.
+**Decisión de agosto de 2026: por ahora el buscador solo se usa desde el bot de Telegram**, así
+que no hace falta ni el subdominio ni el certificado. El contenedor escucha solo en
+`127.0.0.1:8100` y n8n lo llama por la red de docker; nada del buscador está expuesto a
+internet.
+
+Si algún día se quiere el buscador en las webs, está todo preparado en
+`nginx-buscador.conf`: haría falta un registro A de `buscador.aldeapucela.org` a la IP del
+servidor y luego certbot.
 
 ## Enchufar el bot (paso pendiente, en producción)
 
@@ -69,11 +73,9 @@ El subflujo **[Aldea Pucela] Buscador del grupo** ya está creado en n8n, **sin 
 Faltan tres cosas, todas en la interfaz de n8n:
 
 1. **Crear la credencial `Buscador API Key`** (tipo *Header Auth*): nombre `X-API-Key`, valor
-   el `API_KEY` de `~/apps/buscador/.env` del servidor. La usan los dos nodos HTTP.
-2. **Revisar la credencial de Telegram** de los nodos "Responder en el grupo" y "Confirmar el
-   olvido": n8n asignó una automáticamente y hay dos en la instancia. Tiene que ser la del
-   bot del grupo, la misma que usa *[Aldea Pucela] Comandos AldeaPucela_bot*.
-3. **Añadir la rama en el workflow de comandos** (`JMdOQ9eBLbRfD1Xn`), junto a las de
+   el `API_KEY` de `~/apps/buscador/.env` del servidor. La usan los dos nodos HTTP. Es la
+   única que falta: la de Telegram ya está puesta (*Telegram account 2*, AldeaPucela_bot).
+2. **Añadir la rama en el workflow de comandos** (`JMdOQ9eBLbRfD1Xn`), junto a las de
    `/permitirfotos` y `/publicar`: un nodo *If* que compruebe que el texto empieza por
    `/buscar` (o `/olvidar`), seguido de un nodo *Execute Sub-workflow* apuntando a este
    subflujo, con estas entradas:

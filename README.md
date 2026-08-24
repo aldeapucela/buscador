@@ -5,8 +5,8 @@ ecosistema Aldea Pucela: foro Discourse, La Otra Pucela, eventos y chat de Teleg
 Se expone en el bot de Telegram y en las webs. Coste por búsqueda: 0 €.
 
 Estado: **Fase 4 completada.** Desplegado en oracle-server (contenedor `buscador`), con el
-subflujo del bot en n8n y el widget para las webs. Falta el DNS de
-`buscador.aldeapucela.org` para exponerlo en HTTPS; ver [deploy/](deploy/).
+subflujo del bot ya montado en n8n. Por ahora **solo se usa desde el bot de Telegram**: el
+buscador de las webs queda aparcado, así que el contenedor no está expuesto a internet.
 
 - Despliegue y reindexado nocturno: [deploy/README.md](deploy/README.md)
 - Widget para las webs: [web/buscador.js](web/buscador.js) (`web/demo.html` para probarlo)
