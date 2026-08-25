@@ -4,9 +4,9 @@ Buscador híbrido (vectorial + léxico + reranker, todo local en CPU) sobre el c
 ecosistema Aldea Pucela: foro Discourse, La Otra Pucela, eventos y chat de Telegram.
 Se expone en el bot de Telegram y en las webs. Coste por búsqueda: 0 €.
 
-Estado: **Fase 4 completada.** Desplegado en oracle-server (contenedor `buscador`), con el
-subflujo del bot ya montado en n8n. Por ahora **solo se usa desde el bot de Telegram**: el
-buscador de las webs queda aparcado, así que el contenedor no está expuesto a internet.
+Estado: **en marcha.** Desplegado en oracle-server (contenedor `buscador`) y conectado al bot
+de Telegram, con los dos workflows de n8n publicados. Por ahora **solo se usa desde el bot**:
+el buscador de las webs queda aparcado, así que el contenedor no está expuesto a internet.
 
 - Despliegue y reindexado nocturno: [deploy/README.md](deploy/README.md)
 - Widget para las webs: [web/buscador.js](web/buscador.js) (`web/demo.html` para probarlo)

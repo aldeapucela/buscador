@@ -90,14 +90,31 @@ pegado al comando, que es como los manda Telegram en los grupos.
 `/olvidar` solo lo acepta **el autor del mensaje respondido**: se comprueba comparando
 `message.from.id` con `reply_to_message.from.id`. Los admins, de momento, no tienen atajo.
 
-### Lo único que falta
+### Credenciales
 
-**Crear la credencial `Buscador API Key`** (tipo *Header Auth*): nombre `X-API-Key`, valor el
-`API_KEY` de `~/apps/buscador/.env` del servidor. La usan los dos nodos HTTP del subflujo.
-Hasta que exista, los comandos del buscador no responden (fallan dentro de n8n, sin publicar
-nada en el grupo); el resto del bot sigue funcionando igual.
+- **Header Auth** con nombre de cabecera `X-API-Key` y el `API_KEY` de
+  `~/apps/buscador/.env`. Va en "Preguntar al buscador" y "Olvidar el mensaje".
+- **Telegram**: *Telegram account 2* (AldeaPucela_bot), en "Responder en el grupo".
 
-La credencial de Telegram ya está puesta: *Telegram account 2* (AldeaPucela_bot).
+Ojo: crear la credencial en n8n **no la asocia sola** a los nodos. Hay que engancharla en cada
+nodo (o hacerlo por API), o el nodo falla con "Credentials not set".
+
+## ⚠️ Este n8n usa versiones publicadas
+
+Guardar un cambio **no lo pone en producción**. Cada workflow tiene una versión borrador
+(`versionId`) y una publicada (`activeVersionId`), y lo que se ejecuta es la publicada. Un
+cambio guardado y sin publicar no se nota por ningún lado: el bot recibe los mensajes, la
+ejecución sale en verde y simplemente no pasa por los nodos nuevos.
+
+Así que después de **cualquier** cambio:
+
+1. Publicar primero los subflujos. n8n se niega a publicar un workflow que llama a un subflujo
+   sin publicar ("references workflow ... which is not published").
+2. Publicar después el que los llama.
+
+Cómo comprobar si algo se quedó a medias: si `versionId` y `activeVersionId` no coinciden, hay
+cambios sin publicar. En el historial de versiones se ve quién hizo qué, lo que conviene mirar
+**antes** de publicar para no llevarse a producción el borrador a medias de otra persona.
 
 ## Poner el buscador en las webs
 
